@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_vertical"
+    android:background="#FFFFFF">
+
+    <TextView
+        android:id="@+id/config_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Your Range"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#111111"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Start Date Picker Button -->
+    <Button
+        android:id="@+id/btn_start_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Start Date"
+        android:backgroundTint="#F0F0F0"
+        android:textColor="#111111"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- End Date Picker Button -->
+    <Button
+        android:id="@+id/btn_end_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Finish Date"
+        android:backgroundTint="#F0F0F0"
+        android:textColor="#111111"
+        android:layout_marginBottom="40dp"/>
+
+    <!-- Add Widget Confirmation Button -->
+    <Button
+        android:id="@+id/btn_add_widget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Activate Ticks"
+        android:backgroundTint="#111111"
+        android:textColor="#FFFFFF" />
+
+</LinearLayout>
