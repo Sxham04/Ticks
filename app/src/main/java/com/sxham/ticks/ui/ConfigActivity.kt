@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.sxham.ticks.R
 import com.sxham.ticks.data.WidgetPreferences
+import com.sxham.ticks.widget.TicksWidgetProvider
 import java.time.LocalDate
 import java.util.Calendar
 
@@ -79,6 +80,8 @@ class ConfigActivity : AppCompatActivity() {
                 Toast.makeText(this, "Finish date must be after start date", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            val appWidgetManager = AppWidgetManager.getInstance(this)
+            TicksWidgetProvider.updateAppWidget(this, appWidgetManager, appWidgetId)
 
             // Save our data to preferences
             WidgetPreferences.saveWidgetData(this, appWidgetId, start, end)
