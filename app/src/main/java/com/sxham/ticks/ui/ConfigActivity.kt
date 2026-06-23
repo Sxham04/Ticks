@@ -50,6 +50,19 @@ class ConfigActivity : AppCompatActivity() {
         val btnEnd = findViewById<Button>(R.id.btn_end_date)
         val btnActivate = findViewById<Button>(R.id.btn_add_widget)
 
+        // Pull existing historical ranges from local configurations to pre-fill our setup UI buttons
+        val savedStart = WidgetPreferences.getStartDate(this, appWidgetId)
+        val savedEnd = WidgetPreferences.getEndDate(this, appWidgetId)
+
+// If historical details exist, display them instantly
+        if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE) {
+            startDate = savedStart
+            endDate = savedEnd
+            btnStart.text = "Starts: $savedStart"
+            btnEnd.text = "Finishes: $savedEnd"
+            btnActivate.text = "Update Ticks Settings"
+        }
+
         // 5. Handle Start Date click
         btnStart.setOnClickListener {
             showDatePicker { chosenDate ->

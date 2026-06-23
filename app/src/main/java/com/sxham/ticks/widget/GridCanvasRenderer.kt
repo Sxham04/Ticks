@@ -12,64 +12,97 @@ object GridCanvasRenderer {
 
     fun drawDotGrid(context: Context, startDate: LocalDate, endDate: LocalDate): Bitmap {
         val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
-        val passedDays = ChronoUnit.DAYS.between(startDate, LocalDate.now()).toInt().coerceIn(0, totalDays)
+        val absolutePassedDays = ChronoUnit.DAYS.between(startDate, LocalDate.now()).toInt()
 
-        // 1. Dynamic Column Sizing based on Timeframe Scale
-        val columns = when {
-            totalDays <= 60  -> 8   // Short sprint
-            totalDays <= 365 -> 14  // Year scale
-            else             -> 24  // Large multi-year tracking
+        // 1. Establish our Macro Constraints
+        val maxVisibleDots = 80 // Max dots displayed at once to keep them punchy and visible
+        val columns = 8        // Clear 8 columns layout
+
+        // Window slicing variables
+        val displayDays: Int
+        val renderPassedCount: Int
+        val isWindowed: Boolean
+
+        if (totalDays <= maxVisibleDots) {
+            // Standard View: Timeline fits entirely inside our grid layout
+            displayDays = totalDays
+            renderPassedCount = absolutePassedDays.coerceIn(0, totalDays)
+            isWindowed = false
+        } else {
+            // Sliding Window View: Slice out an 80-day block centered near today
+            displayDays = maxVisibleDots
+            isWindowed = true
+
+            // Calculate how many rows/days to offset so "Today" stays visible in the matrix
+            val currentSegment = (absolutePassedDays / maxVisibleDots)
+            val startOffset = currentSegment * maxVisibleDots
+
+            val remainingInTimeline = totalDays - startOffset
+            val actualWindowSize = remainingInTimeline.coerceAtMost(maxVisibleDots)
+
+            renderPassedCount = (absolutePassedDays - startOffset).coerceIn(0, actualWindowSize)
         }
-        val rows = Math.ceil(totalDays.toDouble() / columns).toInt().coerceAtLeast(1)
 
-        // 2. Proportional Grid Math (Fixes wide vertical gaps)
+        val rows = Math.ceil(displayDays.toDouble() / columns).toInt().coerceAtLeast(1)
+
+        // 2. Proportional Grid Metrics
         val bitmapWidth = 1000
-        val baseSpacing = bitmapWidth / (columns + 1) // Force square aspect ratio boundaries
+        val baseSpacing = bitmapWidth / (columns + 1)
         val spacingX = baseSpacing.toFloat()
-        val spacingY = baseSpacing.toFloat() // Forces equal vertical/horizontal gaps
+        val spacingY = baseSpacing.toFloat()
 
-        // Calculate dynamic height based directly on row count
         val paddingTop = spacingY
         val paddingLeft = spacingX
-        val bitmapHeight = ((rows + 1) * baseSpacing).coerceAtLeast(400)
 
-        // Create the tailored bitmap surface
+        // Add extra room at the bottom for a progress tracking text line
+        val textHeightSpacer = 120f
+        val bitmapHeight = ((rows + 1) * baseSpacing + textHeightSpacer).toInt().coerceAtLeast(400)
+
         val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.TRANSPARENT)
 
-        // 3. Dynamic Dot Sizing (Shrinks cleanly if user inputs massive spans)
-        val dotRadius = when {
-            totalDays <= 60  -> 24f
-            totalDays <= 365 -> 14f
-            else             -> 8f
-        }
+        val dotRadius = 22f
 
-        // 4. Fine-Tuned Minimalist Aesthetics
+        // 3. Styling Brushes
         val passedPaint = Paint().apply {
-            color = Color.parseColor("#FFFFFF") // Bright, solid white (This day is over and locked in)
+            color = Color.parseColor("#FFFFFF") // Solid White
             isAntiAlias = true
-            style = Paint.Style.FILL
         }
 
         val remainingPaint = Paint().apply {
-            color = Color.parseColor("#40FFFFFF") // Soft, muted translucent white (The future)
+            color = Color.parseColor("#33FFFFFF") // Muted Translucent White
             isAntiAlias = true
-            style = Paint.Style.FILL
         }
 
-        // 5. Build Grid
-        for (i in 0 until totalDays) {
+        val textPaint = Paint().apply {
+            color = Color.parseColor("#88FFFFFF") // Elegant secondary text tone
+            textSize = 36f
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+
+        // 4. Paint the Grid Matrix
+        for (i in 0 until displayDays) {
             val row = i / columns
             val col = i % columns
 
-            // Grid coordinate calculations
             val cx = paddingLeft + (col * spacingX)
             val cy = paddingTop + (row * spacingY)
 
-            val currentPaint = if (i < passedDays) passedPaint else remainingPaint
+            val currentPaint = if (i < renderPassedCount) passedPaint else remainingPaint
             canvas.drawCircle(cx, cy, dotRadius, currentPaint)
         }
+
+        // 5. Render Macro Progress Indicator Text
+        val progressPercent = ((absolutePassedDays.toFloat() / totalDays.toFloat()) * 100).coerceIn(0f, 100f).toInt()
+        val footerText = if (isWindowed) {
+            "Total Time: $absolutePassedDays / ${totalDays}d passed ($progressPercent%) • Window view"
+        } else {
+            "$absolutePassedDays / ${totalDays}d passed ($progressPercent%)"
+        }
+
+        canvas.drawText(footerText, (bitmapWidth / 2f), (bitmapHeight - 50f), textPaint)
 
         return bitmap
     }
