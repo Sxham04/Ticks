@@ -5,43 +5,53 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 object GridCanvasRenderer {
 
     fun drawDotGrid(context: Context, startDate: LocalDate, endDate: LocalDate): Bitmap {
-        val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
-        val absolutePassedDays = ChronoUnit.DAYS.between(startDate, LocalDate.now()).toInt()
+        // 1. Force explicit System Default Timezone to avoid off-by-one calendar caching bugs
+        val today = LocalDate.now(ZoneId.systemDefault())
 
-        // 1. Establish our Macro Constraints
-        val maxVisibleDots = 80 // Max dots displayed at once to keep them punchy and visible
-        val columns = 8        // Clear 8 columns layout
+        val totalDays = (ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1).coerceAtLeast(1)
 
-        // Window slicing variables
+        // Calculate raw passed days without constraints first
+        val rawPassedDays = ChronoUnit.DAYS.between(startDate, today).toInt()
+        val absolutePassedDays = rawPassedDays.coerceIn(0, totalDays)
+
+        // Debug log directly to Android Studio's system logcat window
+        Log.d("TicksEngine", "Start: $startDate | Today: $today | End: $endDate")
+        Log.d("TicksEngine", "Total Days: $totalDays | Absolute Passed: $absolutePassedDays")
+
+        val maxVisibleDots = 80
+        val columns = 8
+
         val displayDays: Int
         val renderPassedCount: Int
         val isWindowed: Boolean
 
         if (totalDays <= maxVisibleDots) {
-            // Standard View: Timeline fits entirely inside our grid layout
             displayDays = totalDays
-            renderPassedCount = absolutePassedDays.coerceIn(0, totalDays)
+            renderPassedCount = absolutePassedDays
             isWindowed = false
         } else {
-            // Sliding Window View: Slice out an 80-day block centered near today
             displayDays = maxVisibleDots
             isWindowed = true
 
-            // Calculate how many rows/days to offset so "Today" stays visible in the matrix
-            val currentSegment = (absolutePassedDays / maxVisibleDots)
+            // Sliding Window calculation fix
+            val currentSegment = absolutePassedDays / maxVisibleDots
             val startOffset = currentSegment * maxVisibleDots
+            val actualWindowSize = (totalDays - startOffset).coerceAtMost(maxVisibleDots)
 
-            val remainingInTimeline = totalDays - startOffset
-            val actualWindowSize = remainingInTimeline.coerceAtMost(maxVisibleDots)
-
+            // Ensure render count accurately reflects passed days within this specific window slice
             renderPassedCount = (absolutePassedDays - startOffset).coerceIn(0, actualWindowSize)
         }
+
+        Log.d("TicksEngine", "Rendering Window Size: $displayDays | Render Passed Dots: $renderPassedCount")
+
 
         val rows = Math.ceil(displayDays.toDouble() / columns).toInt().coerceAtLeast(1)
 
