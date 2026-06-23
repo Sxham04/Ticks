@@ -47,13 +47,13 @@ object GridCanvasRenderer {
 
         // 4. Fine-Tuned Minimalist Aesthetics
         val passedPaint = Paint().apply {
-            color = Color.parseColor("#121212") // Deep dark premium shade for completed days
+            color = Color.parseColor("#FFFFFF") // Bright, solid white (This day is over and locked in)
             isAntiAlias = true
             style = Paint.Style.FILL
         }
 
         val remainingPaint = Paint().apply {
-            color = Color.parseColor("#EAEAEA") // Off-white clean shade for incomplete days
+            color = Color.parseColor("#40FFFFFF") // Soft, muted translucent white (The future)
             isAntiAlias = true
             style = Paint.Style.FILL
         }
