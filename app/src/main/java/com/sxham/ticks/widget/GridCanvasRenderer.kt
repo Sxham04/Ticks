@@ -11,52 +11,63 @@ import java.time.temporal.ChronoUnit
 object GridCanvasRenderer {
 
     fun drawDotGrid(context: Context, startDate: LocalDate, endDate: LocalDate): Bitmap {
-        // 1. Calculate day intervals
         val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
         val passedDays = ChronoUnit.DAYS.between(startDate, LocalDate.now()).toInt().coerceIn(0, totalDays)
 
-        // 2. Set up the sizing math (Canvas dimensions in pixels)
-        val bitmapWidth = 600
-        val bitmapHeight = 800
+        // 1. Dynamic Column Sizing based on Timeframe Scale
+        val columns = when {
+            totalDays <= 60  -> 8   // Short sprint
+            totalDays <= 365 -> 14  // Year scale
+            else             -> 24  // Large multi-year tracking
+        }
+        val rows = Math.ceil(totalDays.toDouble() / columns).toInt().coerceAtLeast(1)
+
+        // 2. Proportional Grid Math (Fixes wide vertical gaps)
+        val bitmapWidth = 1000
+        val baseSpacing = bitmapWidth / (columns + 1) // Force square aspect ratio boundaries
+        val spacingX = baseSpacing.toFloat()
+        val spacingY = baseSpacing.toFloat() // Forces equal vertical/horizontal gaps
+
+        // Calculate dynamic height based directly on row count
+        val paddingTop = spacingY
+        val paddingLeft = spacingX
+        val bitmapHeight = ((rows + 1) * baseSpacing).coerceAtLeast(400)
+
+        // Create the tailored bitmap surface
         val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-
-        // Clear canvas with a transparent background (or match your aesthetic preference)
         canvas.drawColor(Color.TRANSPARENT)
 
-        // 3. Define the styling configurations
+        // 3. Dynamic Dot Sizing (Shrinks cleanly if user inputs massive spans)
+        val dotRadius = when {
+            totalDays <= 60  -> 24f
+            totalDays <= 365 -> 14f
+            else             -> 8f
+        }
+
+        // 4. Fine-Tuned Minimalist Aesthetics
         val passedPaint = Paint().apply {
-            color = Color.parseColor("#111111") // Sharp dark dot for spent days
+            color = Color.parseColor("#121212") // Deep dark premium shade for completed days
             isAntiAlias = true
             style = Paint.Style.FILL
         }
 
         val remainingPaint = Paint().apply {
-            color = Color.parseColor("#E5E5E5") // Soft gray dot for remaining days
+            color = Color.parseColor("#EAEAEA") // Off-white clean shade for incomplete days
             isAntiAlias = true
             style = Paint.Style.FILL
         }
 
-        // 4. Grid Layout Math
-        val columns = 10                  // 10 dots per row
-        val dotRadius = 10f                // Size of each dot
-        val spacingX = 50f                // Horizontal gap between dots
-        val spacingY = 50f                // Vertical gap between rows
-        val paddingLeft = 50f             // Margins from the edges
-        val paddingTop = 50f
-
-        // 5. Draw the grid
+        // 5. Build Grid
         for (i in 0 until totalDays) {
             val row = i / columns
             val col = i % columns
 
-            // Compute exact pixel coordinate for this specific dot
+            // Grid coordinate calculations
             val cx = paddingLeft + (col * spacingX)
             val cy = paddingTop + (row * spacingY)
 
-            // Pick color depending on whether the day has slipped away
             val currentPaint = if (i < passedDays) passedPaint else remainingPaint
-
             canvas.drawCircle(cx, cy, dotRadius, currentPaint)
         }
 
