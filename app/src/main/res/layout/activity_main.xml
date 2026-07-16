@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:padding="20dp">
 
-    <!-- Title block -->
     <TextView
         android:id="@+id/tv_main_title"
         android:layout_width="wrap_content"
@@ -24,24 +23,35 @@
         android:text="Full range contribution matrix"
         android:textColor="#888888"
         android:textSize="14sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="20dp"/>
 
-    <!-- Calendar grid — wraps to content size, scrolls horizontally -->
-    <HorizontalScrollView
+    <!-- Calendar card -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
+        android:orientation="vertical"
         android:background="#1A1A1A"
         android:padding="12dp">
 
+        <!-- Month label row — one cell per week column, same width as dot cells -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_month_labels"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:nestedScrollingEnabled="false"/>
+
+        <!-- Dot grid — 7 rows × N week columns -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_calendar_grid"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:overScrollMode="never"
+            android:nestedScrollingEnabled="false"/>
 
-    </HorizontalScrollView>
+    </LinearLayout>
 
-    <!-- Spacer pushes button to bottom -->
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"

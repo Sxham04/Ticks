@@ -6,13 +6,13 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sxham.ticks.data.WidgetPreferences
 import com.sxham.ticks.ui.CalendarAdapter
 import com.sxham.ticks.ui.CalendarBuilder
-import com.sxham.ticks.ui.CalendarItem
 import com.sxham.ticks.ui.ConfigActivity
-import com.sxham.ticks.ui.MonthGapDecoration
+import com.sxham.ticks.ui.MonthLabelAdapter
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,28 +45,31 @@ class MainActivity : AppCompatActivity() {
     private fun buildCalendar() {
         val startDate = WidgetPreferences.getStartDate(this, appWidgetId)
         val endDate   = WidgetPreferences.getEndDate(this, appWidgetId)
-        val items     = CalendarBuilder.build(startDate, endDate)
+        val columns   = CalendarBuilder.build(startDate, endDate)
+        val dots      = CalendarBuilder.buildDotItems(columns)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.rv_calendar_grid)
+        // ── Month label row (one LinearLayoutManager item per week column) ──
+        val rvLabels = findViewById<RecyclerView>(R.id.rv_month_labels)
+        val labelLM  = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        rvLabels.layoutManager = labelLM
+        rvLabels.adapter = MonthLabelAdapter(columns)
 
-        val spanCount = CalendarBuilder.SPAN_COUNT
+        // ── Dot grid (7 rows × N columns, horizontal scroll) ────────────────
+        val rvGrid = findViewById<RecyclerView>(R.id.rv_calendar_grid)
+        val gridLM = GridLayoutManager(this, CalendarBuilder.SPAN_COUNT, GridLayoutManager.HORIZONTAL, false)
+        rvGrid.layoutManager = gridLM
+        rvGrid.adapter = CalendarAdapter(dots, startDate, endDate)
 
-        val layoutManager = GridLayoutManager(this, spanCount, GridLayoutManager.HORIZONTAL, false)
-
-        // Month labels span 3 columns so the text has room to render fully.
-        // All other cells span 1 column as normal.
-        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-            override fun getSpanSize(position: Int): Int {
-                return if (items[position] is CalendarItem.MonthLabel) 3 else 1
+        // ── Sync scroll: dragging either RecyclerView scrolls both ───────────
+        rvGrid.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                rvLabels.scrollBy(dx, 0)
             }
-        }
-
-        while (recyclerView.itemDecorationCount > 0) {
-            recyclerView.removeItemDecorationAt(0)
-        }
-        recyclerView.addItemDecoration(MonthGapDecoration(this, items, spanCount))
-
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = CalendarAdapter(items, startDate, endDate)
+        })
+        rvLabels.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                rvGrid.scrollBy(dx, 0)
+            }
+        })
     }
 }
