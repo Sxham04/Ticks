@@ -33,6 +33,7 @@ class CalendarAdapter(
 
         holder.dotView.setBackgroundResource(when {
             date.isBefore(startDate) || date.isAfter(endDate) -> R.drawable.dot_hollow
+            date == today                                      -> R.drawable.dot_today
             !date.isAfter(today)                              -> R.drawable.dot_complete
             else                                              -> R.drawable.dot_incomplete
         })
