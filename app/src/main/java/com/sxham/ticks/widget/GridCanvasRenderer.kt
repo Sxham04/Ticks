@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -34,14 +33,10 @@ object GridCanvasRenderer {
         val rawPassedDays = ChronoUnit.DAYS.between(startDate, today).toInt()
         val absolutePassedDays = rawPassedDays.coerceIn(0, totalDays)
 
-        // Index of today within the full range (0-based), -1 if outside range
         val todayIndex = when {
             today.isBefore(startDate) || today.isAfter(endDate) -> -1
             else -> ChronoUnit.DAYS.between(startDate, today).toInt()
         }
-
-        Log.d("TicksEngine", "Start: $startDate | Today: $today | End: $endDate")
-        Log.d("TicksEngine", "Total Days: $totalDays | Absolute Passed: $absolutePassedDays")
 
         val maxRows = (bitmapHeight / minCellPx).coerceIn(2, 20)
         val maxVisibleDots = columns * maxRows
@@ -55,18 +50,13 @@ object GridCanvasRenderer {
             windowStartOffset = 0
             isWindowed = false
         } else {
-            // Anchor window to end of range so final days always visible
             displayDays = maxVisibleDots
             windowStartOffset = totalDays - maxVisibleDots
             isWindowed = true
         }
 
         val renderPassedCount = (absolutePassedDays - windowStartOffset).coerceIn(0, displayDays)
-
-        // Today's index within the window (-1 if not visible)
         val todayWindowIndex = if (todayIndex >= 0) todayIndex - windowStartOffset else -1
-
-        Log.d("TicksEngine", "Columns: $columns | Dots: $displayDays | WindowStart: $windowStartOffset | RenderPassed: $renderPassedCount | TodayWindow: $todayWindowIndex")
 
         val rows = ceil(displayDays.toDouble() / columns).toInt().coerceAtLeast(1)
 
@@ -86,7 +76,7 @@ object GridCanvasRenderer {
             isAntiAlias = true
         }
         val todayPaint = Paint().apply {
-            color = Color.parseColor("#4ADE80") // same green as dot_today drawable
+            color = Color.parseColor("#4ADE80")
             isAntiAlias = true
         }
         val remainingPaint = Paint().apply {
